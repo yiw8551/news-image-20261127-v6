@@ -57,6 +57,10 @@ def main(argv):
         print("error: entry.png is not 1024x1024", file=sys.stderr)
         return 1
 
+    if source.stat().st_size > 1048576:
+        print("error: entry.png exceeds the 1048576-byte size cap", file=sys.stderr)
+        return 1
+
     shutil.copyfile(source, dest)
 
     if dest.stat().st_size != source.stat().st_size:
