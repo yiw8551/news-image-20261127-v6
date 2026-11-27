@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+"""news-image-20261127-v6: copy the pre-rendered entry.png to the output dir.
+
+Standard library only. The entry image is rendered ahead of time and shipped
+in this repository as entry.png; this program only places a byte-exact copy
+at <output-dir>/entry.png. The output directory is taken from argv[1], then
+from $MAKEFUN_OUTPUT_DIR, then from /output. The copy is verified by comparing
+SHA-256 digests of the source and the destination.
+"""
+
+import hashlib
+import os
+import shutil
+import sys
+from pathlib import Path
+
+
+def _digest(path):
+    h = hashlib.sha256()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _output_dir(argv):
+    if len(argv) > 1 and argv[1]:
+        return Path(argv[1])
+    env_dir = os.environ.get("MAKEFUN_OUTPUT_DIR")
+    if env_dir:
+        return Path(env_dir)
+    return Path("/output")
+
+
+def main(argv):
+    here = Path(__file__).resolve().parent
+    source = here / "entry.png"
+    if not source.is_file():
+        print(f"error: {source} not found", file=sys.stderr)
+        return 1
+
+    dest_dir = _output_dir(argv)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    dest = dest_dir / "entry.png"
+
+    shutil.copyfile(source, dest)
+
+    if _digest(source) != _digest(dest):
+        print("error: copied file digest differs from source", file=sys.stderr)
+        return 1
+    print(f"wrote {dest}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main(sys.argv))
