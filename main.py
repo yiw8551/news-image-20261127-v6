@@ -43,8 +43,17 @@ def main(argv):
     dest_dir.mkdir(parents=True, exist_ok=True)
     dest = dest_dir / "entry.png"
 
+    with open(source, "rb") as f:
+        signature = f.read(8)
+    if signature != b"\x89PNG\r\n\x1a\n":
+        print("error: entry.png is not a PNG file", file=sys.stderr)
+        return 1
+
     shutil.copyfile(source, dest)
 
+    if dest.stat().st_size != source.stat().st_size:
+        print("error: copied file size differs from source", file=sys.stderr)
+        return 1
     if _digest(source) != _digest(dest):
         print("error: copied file digest differs from source", file=sys.stderr)
         return 1
