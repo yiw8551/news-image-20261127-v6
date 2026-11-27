@@ -48,6 +48,14 @@ def main(argv):
     if signature != b"\x89PNG\r\n\x1a\n":
         print("error: entry.png is not a PNG file", file=sys.stderr)
         return 1
+    with open(source, "rb") as f:
+        header = f.read(24)
+    if len(header) < 24 or header[12:16] != b"IHDR":
+        print("error: entry.png has no IHDR chunk", file=sys.stderr)
+        return 1
+    if int.from_bytes(header[16:20], "big") != 1024 or int.from_bytes(header[20:24], "big") != 1024:
+        print("error: entry.png is not 1024x1024", file=sys.stderr)
+        return 1
 
     shutil.copyfile(source, dest)
 
